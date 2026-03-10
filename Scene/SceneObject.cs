@@ -9,10 +9,10 @@ namespace CubeViewer.Scene
         protected Mesh mesh;
         protected Mesh edgeMesh;
         protected Vector3 position = Vector3.Zero;
-        protected Vector3 color = new Vector3(1f,1f,1f);
-        protected Vector3 edgeColor = new Vector3(0f,0f,0f);
+        protected Vector3 color = new Vector3(1f, 1f, 1f);
+        protected Vector3 edgeColor = new Vector3(0f, 0f, 0f);
         public bool Visible { get; set; } = true;
-        
+
         public SceneObject(Mesh mesh, Mesh edgeMesh = null)
         {
             this.mesh = mesh;
@@ -25,45 +25,60 @@ namespace CubeViewer.Scene
 
         public string ColorHex
         {
-            get => $"#{(int)(color.X*255):X2}{(int)(color.Y*255):X2}{(int)(color.Z*255):X2}";
+            get => $"#{(int)(color.X * 255):X2}{(int)(color.Y * 255):X2}{(int)(color.Z * 255):X2}";
             set
             {
-                if(uint.TryParse(value.Replace("#",""), System.Globalization.NumberStyles.HexNumber, null, out uint hex))
+                if (uint.TryParse(value.Replace("#", ""), System.Globalization.NumberStyles.HexNumber, null, out uint hex))
                 {
-                    color.X = ((hex>>16)&0xFF)/255f;
-                    color.Y = ((hex>>8)&0xFF)/255f;
-                    color.Z = (hex&0xFF)/255f;
+                    color.X = ((hex >> 16) & 0xFF) / 255f;
+                    color.Y = ((hex >> 8) & 0xFF) / 255f;
+                    color.Z = (hex & 0xFF) / 255f;
                 }
             }
         }
 
         public string EdgeColorHex
         {
-            get => $"#{(int)(edgeColor.X*255):X2}{(int)(edgeColor.Y*255):X2}{(int)(edgeColor.Z*255):X2}";
+            get => $"#{(int)(edgeColor.X * 255):X2}{(int)(edgeColor.Y * 255):X2}{(int)(edgeColor.Z * 255):X2}";
             set
             {
-                if(uint.TryParse(value.Replace("#",""), System.Globalization.NumberStyles.HexNumber, null, out uint hex))
+                if (uint.TryParse(value.Replace("#", ""), System.Globalization.NumberStyles.HexNumber, null, out uint hex))
                 {
-                    edgeColor.X = ((hex>>16)&0xFF)/255f;
-                    edgeColor.Y = ((hex>>8)&0xFF)/255f;
-                    edgeColor.Z = (hex&0xFF)/255f;
+                    edgeColor.X = ((hex >> 16) & 0xFF) / 255f;
+                    edgeColor.Y = ((hex >> 8) & 0xFF) / 255f;
+                    edgeColor.Z = (hex & 0xFF) / 255f;
                 }
             }
+        }
+
+        // Returns (minX, minY, maxX, maxY) in world space, ignoring Z
+        public (float minX, float minY, float maxX, float maxY) GetBounds2D()
+        {
+            var verts = mesh.Vertices;
+            float minX = float.MaxValue, minY = float.MaxValue;
+            float maxX = float.MinValue, maxY = float.MinValue;
+
+            // stride is 6 floats: x,y,z,r,g,b
+            for (int i = 0; i < verts.Length; i += 6)
+            {
+                float wx = verts[i]     + position.X;
+                float wy = verts[i + 1] + position.Y;
+                if (wx < minX) minX = wx;
+                if (wx > maxX) maxX = wx;
+                if (wy < minY) minY = wy;
+                if (wy > maxY) maxY = wy;
+            }
+            return (minX, minY, maxX, maxY);
         }
 
         public void Draw(Shader shader)
         {
             shader.Use();
             Matrix4 model = Matrix4.CreateTranslation(position);
-
             shader.SetMatrix4("model", model);
-
-            // solid mesh
             shader.SetVector3("objectColor", color);
             mesh.Draw();
-
-            // edges
-            if(edgeMesh != null)
+            if (edgeMesh != null)
             {
                 shader.SetVector3("objectColor", edgeColor);
                 GL.LineWidth(2f);

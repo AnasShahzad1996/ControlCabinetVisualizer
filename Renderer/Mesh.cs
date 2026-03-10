@@ -5,12 +5,14 @@ public class Mesh
     public int Vbo { get; private set; }
     public int Ebo { get; private set; }
     public int IndexCount { get; private set; }
+    public float[] Vertices { get; private set; }  // <-- add this
     private PrimitiveType drawMode;
 
     public Mesh(float[] vertices, uint[] indices, PrimitiveType mode = PrimitiveType.Triangles)
     {
         drawMode = mode;
         IndexCount = indices.Length;
+        Vertices = vertices;  // <-- add this
 
         Vao = GL.GenVertexArray();
         Vbo = GL.GenBuffer();

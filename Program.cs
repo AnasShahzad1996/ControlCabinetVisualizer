@@ -17,7 +17,7 @@ class Program
     static void Main()
     {
         var gws = GameWindowSettings.Default;
-        var nws = new NativeWindowSettings() { ClientSize = new Vector2i(1024, 768), Title = "CubeViewer" };
+        var nws = new NativeWindowSettings() { ClientSize = new Vector2i(1400, 768), Title = "CubeViewer" };
         using var window = new GameWindow(gws, nws);
 
         var shader = new Shader(
@@ -38,13 +38,13 @@ class Program
 
         var scene = new Scene();
         SimpleGui? gui = null;
+        MapView2D? mapView = null;
         var namedObjects = new List<(string Name, SceneObject Obj)>();
         var visibility = new Dictionary<string, bool>();
 
-        // Add axes
+        // Axes (excluded from map)
         var axes = CoordinateAxes.Create(3f);
         scene.AddObject(axes);
-        namedObjects.Add(("Axes", axes));
 
         // Load model
         var objs = ObjImporter.Load(
@@ -57,7 +57,7 @@ class Program
         foreach (var o in objs)
         {
             scene.AddObject(o);
-            namedObjects.Add(($"Part {namedObjects.Count}", o));
+            namedObjects.Add(($"Part {namedObjects.Count + 1}", o));
         }
 
         window.Load += () =>
@@ -65,8 +65,9 @@ class Program
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1f);
             GL.Enable(EnableCap.DepthTest);
 
-            // Build GUI after GL context is ready
             gui = new SimpleGui(window.ClientSize.X, window.ClientSize.Y);
+            mapView = new MapView2D();
+
             float y = 10;
             foreach (var (name, obj) in namedObjects)
             {
@@ -85,13 +86,17 @@ class Program
             gui?.Resize(e.Width, e.Height);
         };
 
-        // Input — only start rotating if not clicking a GUI button
         window.MouseDown += e =>
         {
             if (e.Button == MouseButton.Left)
             {
-                gui?.HandleClick(window.MouseState.X, window.MouseState.Y);
-                rotating = true;
+                // Only rotate if clicking in the 3D viewport (left 70%)
+                float split = window.ClientSize.X * 0.7f;
+                if (window.MouseState.X < split)
+                {
+                    gui?.HandleClick(window.MouseState.X, window.MouseState.Y);
+                    rotating = true;
+                }
             }
             if (e.Button == MouseButton.Middle) panning = true;
         };
@@ -109,19 +114,43 @@ class Program
             }
             lastMouse = e.Position;
         };
-        window.MouseWheel += e => { camera.Distance -= e.OffsetY * 0.5f; camera.Distance = Math.Clamp(camera.Distance, 1f, 20f); };
+        window.MouseWheel += e =>
+        {
+            if (window.MouseState.X < window.ClientSize.X * 0.7f)
+            {
+                camera.Distance -= e.OffsetY * 0.5f;
+                camera.Distance = Math.Clamp(camera.Distance, 1f, 20f);
+            }
+        };
 
-        // Render loop
         window.RenderFrame += args =>
         {
+            int W = window.ClientSize.X, H = window.ClientSize.Y;
+            int split = (int)(W * 0.7f);   // 3D view: left 70%
+            int mapW  = W - split;          // 2D map:  right 30%
+
+            // ── 3D viewport ──
+            GL.Viewport(0, 0, split, H);
+            GL.Scissor(0, 0, split, H);
+            GL.Enable(EnableCap.ScissorTest);
+            GL.ClearColor(0.2f, 0.3f, 0.3f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Disable(EnableCap.ScissorTest);
+
             var view = camera.GetViewMatrix();
             var proj = Matrix4.CreatePerspectiveFieldOfView(
-                MathHelper.DegreesToRadians(45f),
-                window.ClientSize.X / (float)window.ClientSize.Y,
-                0.1f, 100f);
+                MathHelper.DegreesToRadians(45f), split / (float)H, 0.1f, 100f);
             scene.Render(shader, view, proj);
+
+            // GUI overlaid on 3D view
+            GL.Viewport(0, 0, split, H);
             gui?.Render(label => visibility[label]);
+
+            // ── 2D map viewport ──
+            mapView?.Render(namedObjects, visibility, split, 0, mapW, H);
+
+            // Restore full viewport for swap
+            GL.Viewport(0, 0, W, H);
             window.SwapBuffers();
         };
 
