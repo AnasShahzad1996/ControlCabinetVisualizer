@@ -17,7 +17,8 @@ namespace CubeViewer.Scene
             shader.SetMatrix4("projection", projection);
 
             foreach(var obj in objects)
-                obj.Draw(shader);
+                if(obj.Visible)
+                    obj.Draw(shader);
         }
     }
 }

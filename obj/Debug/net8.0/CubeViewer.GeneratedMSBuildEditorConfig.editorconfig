@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = CubeViewer
-build_property.ProjectDir = /home/anas/learn/vetaion/CubeViewer/
+build_property.ProjectDir = /home/anas/learn/vetaion/ControlCabinetVisualizer/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

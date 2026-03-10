@@ -11,7 +11,8 @@ namespace CubeViewer.Scene
         protected Vector3 position = Vector3.Zero;
         protected Vector3 color = new Vector3(1f,1f,1f);
         protected Vector3 edgeColor = new Vector3(0f,0f,0f);
-
+        public bool Visible { get; set; } = true;
+        
         public SceneObject(Mesh mesh, Mesh edgeMesh = null)
         {
             this.mesh = mesh;

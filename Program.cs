@@ -12,15 +12,14 @@ class Program
 {
     static OrbitCamera camera = new();
     static Vector2 lastMouse = Vector2.Zero;
-    static bool rotating=false, panning=false;
+    static bool rotating = false, panning = false;
 
     static void Main()
     {
         var gws = GameWindowSettings.Default;
-        var nws = new NativeWindowSettings(){ ClientSize=new Vector2i(1024,768), Title="CubeViewer" };
-        using var window = new GameWindow(gws,nws);
+        var nws = new NativeWindowSettings() { ClientSize = new Vector2i(1024, 768), Title = "CubeViewer" };
+        using var window = new GameWindow(gws, nws);
 
-        // Shader
         var shader = new Shader(
             @"#version 330 core
               layout(location=0) in vec3 aPos;
@@ -38,68 +37,91 @@ class Program
         );
 
         var scene = new Scene();
+        SimpleGui? gui = null;
+        var namedObjects = new List<(string Name, SceneObject Obj)>();
+        var visibility = new Dictionary<string, bool>();
 
-        // Add primitives
-        //var cube = new Cube(1.9f);
-        //cube.Position = new Vector3(-1,0,0);
-        //cube.ColorHex="#FF5555"; cube.EdgeColorHex="#000000";
-        //scene.AddObject(cube);
-
-        //var sphere = new Sphere(0.7f);
-        //sphere.Position = new Vector3(0,0,0);
-        //sphere.ColorHex="#55FF55"; sphere.EdgeColorHex="#000000";
-        //scene.AddObject(sphere);
-
+        // Add axes
         var axes = CoordinateAxes.Create(3f);
         scene.AddObject(axes);
+        namedObjects.Add(("Axes", axes));
 
-        //var dog = new MiniDog(Vector3.Zero);
-        //foreach(var obj in dog.SceneObjects)
-        //    scene.AddObject(obj);
-
+        // Load model
         var objs = ObjImporter.Load(
             "Models/Rittal_AX_1033_300_300_210/new.obj",
-            new Vector3(0,0,0),
+            new Vector3(0, 0, 0),
             new Vector3(-0.01f),
             new Vector3(0.8f),
             false
         );
-
-        // print length of objs
-        foreach(var o in objs)
+        foreach (var o in objs)
+        {
             scene.AddObject(o);
+            namedObjects.Add(($"Part {namedObjects.Count}", o));
+        }
 
         window.Load += () =>
         {
-            GL.ClearColor(0.2f,0.3f,0.3f,1f);
+            GL.ClearColor(0.2f, 0.3f, 0.3f, 1f);
             GL.Enable(EnableCap.DepthTest);
+
+            // Build GUI after GL context is ready
+            gui = new SimpleGui(window.ClientSize.X, window.ClientSize.Y);
+            float y = 10;
+            foreach (var (name, obj) in namedObjects)
+            {
+                visibility[name] = true;
+                string n = name; SceneObject captured = obj;
+                gui.AddToggleButton(name, 10, y, 180, 28,
+                    () => visibility[n],
+                    () => { visibility[n] = !visibility[n]; captured.Visible = visibility[n]; });
+                y += 34;
+            }
         };
 
-        // Input
-        window.MouseDown += e => { if(e.Button==MouseButton.Left) rotating=true; if(e.Button==MouseButton.Middle)panning=true; };
-        window.MouseUp += e => { rotating=false; panning=false; lastMouse=Vector2.Zero; };
+        window.Resize += e =>
+        {
+            GL.Viewport(0, 0, e.Width, e.Height);
+            gui?.Resize(e.Width, e.Height);
+        };
+
+        // Input — only start rotating if not clicking a GUI button
+        window.MouseDown += e =>
+        {
+            if (e.Button == MouseButton.Left)
+            {
+                gui?.HandleClick(window.MouseState.X, window.MouseState.Y);
+                rotating = true;
+            }
+            if (e.Button == MouseButton.Middle) panning = true;
+        };
+        window.MouseUp += e => { rotating = false; panning = false; lastMouse = Vector2.Zero; };
         window.MouseMove += e =>
         {
-            if(!rotating && !panning){ lastMouse=Vector2.Zero; return; }
-            if(lastMouse==Vector2.Zero){ lastMouse=e.Position; return; }
+            if (!rotating && !panning) { lastMouse = Vector2.Zero; return; }
+            if (lastMouse == Vector2.Zero) { lastMouse = e.Position; return; }
             var delta = e.Position - lastMouse;
-            if(rotating){ camera.Yaw += delta.X*0.5f; camera.Pitch -= delta.Y*0.5f; camera.Pitch=Math.Clamp(camera.Pitch,-89f,89f);}
-            if(panning)
+            if (rotating) { camera.Yaw += delta.X * 0.5f; camera.Pitch -= delta.Y * 0.5f; camera.Pitch = Math.Clamp(camera.Pitch, -89f, 89f); }
+            if (panning)
             {
-                var right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY,camera.Target));
-                camera.Target += -right*delta.X*0.01f + Vector3.UnitY*delta.Y*0.01f;
+                var right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, camera.Target));
+                camera.Target += -right * delta.X * 0.01f + Vector3.UnitY * delta.Y * 0.01f;
             }
-            lastMouse=e.Position;
+            lastMouse = e.Position;
         };
-        window.MouseWheel += e => { camera.Distance -= e.OffsetY*0.5f; camera.Distance=Math.Clamp(camera.Distance,1f,20f); };
+        window.MouseWheel += e => { camera.Distance -= e.OffsetY * 0.5f; camera.Distance = Math.Clamp(camera.Distance, 1f, 20f); };
 
         // Render loop
         window.RenderFrame += args =>
         {
-            GL.Clear(ClearBufferMask.ColorBufferBit|ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             var view = camera.GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45f), window.ClientSize.X/(float)window.ClientSize.Y,0.1f,100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(45f),
+                window.ClientSize.X / (float)window.ClientSize.Y,
+                0.1f, 100f);
             scene.Render(shader, view, proj);
+            gui?.Render(label => visibility[label]);
             window.SwapBuffers();
         };
 
