@@ -1,4 +1,4 @@
-# CubeViewer — Electrical Cabinet Visualizer
+# ControlCabinetViewer — Electrical Cabinet Visualizer
 
 A real-time 3D viewer for electrical cabinet models (e.g. Rittal AX series), built with OpenTK and OpenGL. Includes a 2D top-down map view with scaled axes, per-object visibility toggles, and orbit camera controls.
 
