@@ -17,7 +17,7 @@ class Program
     static void Main()
     {
         var gws = GameWindowSettings.Default;
-        var nws = new NativeWindowSettings() { ClientSize = new Vector2i(1400, 768), Title = "CubeViewer" };
+        var nws = new NativeWindowSettings() { ClientSize = new Vector2i(1400, 768), Title = "ControlCabinetViewer" };
         using var window = new GameWindow(gws, nws);
 
         var shader = new Shader(
