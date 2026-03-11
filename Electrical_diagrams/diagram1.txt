@@ -6,6 +6,7 @@
 # RCD, path, count, start_x, y, z, width, offset, scale, r, g, b
 
 CABINET, Models/Electrical_cabinet.obj, 0, 0, 0, 0.01, 0.8, 0.8, 0.8
-RAIL_STACK, Models/din_rails.obj, 2, -0.675, 0.0, 0.1, 0.675, 0.01, 0.8, 0.2, 0.2
+RAIL_STACK, Models/din_rails.obj, 2, -0.675, 0.625, 0.0, 0.675, -0.01, 0.8, 0.2, 0.2
+RAIL_STACK, Models/din_rails.obj, 2, -0.675, -0.625, 0.0, 0.675, -0.01, 0.8, 0.2, 0.2
 MCB, Models/MCB.obj, 6, -0.880, 0.625, 0.075, 0.180, 0.01, 0.01, 0.8, 0.2, 0.2
 RCD, Models/RCD.obj, 3, -0.880, -0.625, 0.075, 0.720, 0.01, 0.01, 0.2, 0.8, 0.2
