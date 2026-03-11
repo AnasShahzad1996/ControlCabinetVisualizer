@@ -85,13 +85,6 @@ cd ControlCabinetVisualizer
 dotnet restore
 ```
 
-### 4. Add your model
-
-Place your `.obj` model file at:
-```
-Models/Rittal_AX_1033_300_300_210/new.obj
-```
-
 ---
 
 ## Running
@@ -117,6 +110,48 @@ dotnet build -c Release
 | Middle-click + drag | Pan camera |
 | Scroll wheel | Zoom in/out |
 | GUI buttons (left panel) | Toggle object visibility |
+
+---
+
+## Electrical Diagram File (`electrical_diagram.txt`)
+
+Place this file in the same directory as the executable. It defines all objects in the scene — no recompilation needed to change the layout.
+
+### Supported Types
+
+| Type | Description |
+|------|-------------|
+| `CABINET` | The main enclosure (first part = enclosure, second = mounting plate) |
+| `RAIL` | A single DIN rail at a fixed position |
+| `RAIL_STACK` | Multiple DIN rails stacked vertically with a fixed spacing |
+| `MCB` | A row of MCBs placed side by side along the X axis |
+| `RCD` | A row of RCDs placed side by side along the X axis |
+
+### Format
+```
+# Lines starting with # are comments and are ignored
+
+# Single objects
+CABINET,    path, pos_x, pos_y, pos_z, scale, r, g, b
+RAIL,       path, pos_x, pos_y, pos_z, scale, r, g, b
+
+# Stacked rails (count placed downward from start_y, separated by spacing)
+RAIL_STACK, path, count, start_x, start_y, z, spacing, scale, r, g, b
+
+# Repeated components placed side by side along X
+MCB,        path, count, start_x, y, z, width, offset, scale, r, g, b
+RCD,        path, count, start_x, y, z, width, offset, scale, r, g, b
+```
+
+### Example
+```
+CABINET,    Models/Electrical_cabinet.obj, 0, 0, 0, 0.01, 0.8, 0.8, 0.8
+RAIL_STACK, Models/din_rails.obj, 3, -0.675, 0.625, 0.1, 0.625, 0.01, 0.8, 0.2, 0.2
+MCB,        Models/MCB.obj, 6, -0.880, 0.625, 0.075, 0.180, 0.01, 0.01, 0.8, 0.2, 0.2
+RCD,        Models/RCD.obj, 3, -0.880, -0.625, 0.075, 0.720, 0.01, 0.01, 0.2, 0.8, 0.2
+```
+
+> **Note:** Colors are RGB floats in the range `0.0 – 1.0`. Unknown type names print a warning to the console and are skipped without crashing.
 
 ---
 

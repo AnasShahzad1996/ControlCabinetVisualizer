@@ -42,110 +42,165 @@ class Program
         var namedObjects = new List<(string Name, SceneObject Obj)>();
         var visibility = new Dictionary<string, bool>();
 
-        // Axes (excluded from map)
+        // Axes
         foreach (var a in CoordinateAxes.CreateAll(3f))
             scene.AddObject(a);
 
-        // Load model
-        var objs = ObjImporter.Load(
-            "Models/Electrical_cabinet.obj",
-            new Vector3(0, 0, 0),
-            new Vector3(0.01f),
-            new Vector3(0.8f),
-            false
-        );
-
-        int enclosureCount = 0;
-        foreach (var o in objs)
+        // ── Parse electrical_diagram.txt ──────────────────────────────────
+        const string diagramPath = "Electrical_diagrams/diagram1.txt";
+        if (!File.Exists(diagramPath))
         {
-            if(enclosureCount == 0 ){
-            scene.AddObject(o);
-            namedObjects.Add(($"Cabinet Enclosure", o));
-            enclosureCount++;
-            }
-            else
+            Console.WriteLine($"ERROR: '{diagramPath}' not found.");
+            return;
+        }
+
+        int cabinetCount = 0, railCount = 0, mcbCount = 0, rcdCount = 0;
+
+        foreach (var rawLine in File.ReadLines(diagramPath))
+        {
+            var line = rawLine.Contains('#') ? rawLine[..rawLine.IndexOf('#')] : rawLine;
+            line = line.Trim();
+            if (string.IsNullOrEmpty(line)) continue;
+
+            var parts = line.Split(',', StringSplitOptions.TrimEntries);
+            if (parts.Length < 2) continue;
+
+            string type = parts[0].ToUpperInvariant();
+            string path = parts[1];
+
+            try
             {
-                scene.AddObject(o);
-                namedObjects.Add(("Mounting Plate", o));
+                switch (type)
+                {
+                    case "CABINET":
+                    {
+                        // CABINET, path, pos_x, pos_y, pos_z, scale, r, g, b
+                        var pos   = new Vector3(F(parts,2), F(parts,3), F(parts,4));
+                        var scale = new Vector3(F(parts,5));
+                        var color = new Vector3(F(parts,6), F(parts,7), F(parts,8));
+
+                        int partIdx = 0;
+                        foreach (var o in ObjImporter.Load(path, pos, scale, color, false))
+                        {
+                            scene.AddObject(o);
+                            namedObjects.Add((partIdx == 0 ? "Cabinet Enclosure" : "Mounting Plate", o));
+                            partIdx++;
+                        }
+                        cabinetCount++;
+                        break;
+                    }
+
+                    case "RAIL":
+                    {
+                        // RAIL, path, pos_x, pos_y, pos_z, scale, r, g, b
+                        var pos   = new Vector3(F(parts,2), F(parts,3), F(parts,4));
+                        var scale = new Vector3(F(parts,5));
+                        var color = new Vector3(F(parts,6), F(parts,7), F(parts,8));
+
+                        railCount++;
+                        foreach (var o in ObjImporter.Load(path, pos, scale, color, false))
+                        {
+                            scene.AddObject(o);
+                            namedObjects.Add(($"Rail {railCount}", o));
+                        }
+                        break;
+                    }
+
+                    case "RAIL_STACK":
+                    {
+                        // RAIL_STACK, path, count, start_x, start_y, z, spacing, scale, r, g, b
+                        int   total   = (int)F(parts,2);
+                        float startX  = F(parts,3);
+                        float startY  = F(parts,4);
+                        float z       = F(parts,5);
+                        float spacing = F(parts,6);  // vertical distance between rail centers
+                        var   scale   = new Vector3(F(parts,7));
+                        var   color   = new Vector3(F(parts,8), F(parts,9), F(parts,10));
+
+                        float curX = startX;
+                        for (int i = 0; i < total; i++)
+                        {
+                            railCount++;
+                            foreach (var o in ObjImporter.Load(path, new Vector3(curX, startY, z), scale, color, false))
+                            {
+                                scene.AddObject(o);
+                                namedObjects.Add(($"Rail {railCount}", o));
+                            }
+                            curX += (2*spacing); // stack rightward
+                        }
+                        break;
+                    }
+
+                    case "MCB":
+                    {
+                        // MCB, path, count, start_x, y, z, width, offset, scale, r, g, b
+                        int   total  = (int)F(parts,2);
+                        float startX = F(parts,3);
+                        float y      = F(parts,4);
+                        float z      = F(parts,5);
+                        float width  = F(parts,6);
+                        float offset = F(parts,7);
+                        var   scale  = new Vector3(F(parts,8));
+                        var   color  = new Vector3(F(parts,9), F(parts,10), F(parts,11));
+
+                        float curX = startX;
+                        for (int i = 0; i < total; i++)
+                        {
+                            mcbCount++;
+                            int partIdx = 1;
+                            foreach (var o in ObjImporter.Load(path, new Vector3(curX, y, z), scale, color, false))
+                            {
+                                scene.AddObject(o);
+                                namedObjects.Add(($"MCB {mcbCount}.{partIdx}", o));
+                                partIdx++;
+                            }
+                            curX += width + offset;
+                        }
+                        break;
+                    }
+
+                    case "RCD":
+                    {
+                        // RCD, path, count, start_x, y, z, width, offset, scale, r, g, b
+                        int   total  = (int)F(parts,2);
+                        float startX = F(parts,3);
+                        float y      = F(parts,4);
+                        float z      = F(parts,5);
+                        float width  = F(parts,6);
+                        float offset = F(parts,7);
+                        var   scale  = new Vector3(F(parts,8));
+                        var   color  = new Vector3(F(parts,9), F(parts,10), F(parts,11));
+
+                        float curX = startX;
+                        for (int i = 0; i < total; i++)
+                        {
+                            rcdCount++;
+                            int partIdx = 1;
+                            foreach (var o in ObjImporter.Load(path, new Vector3(curX, y, z), scale, color, false))
+                            {
+                                scene.AddObject(o);
+                                namedObjects.Add(($"RCD {rcdCount}.{partIdx}", o));
+                                partIdx++;
+                            }
+                            curX += width + offset;
+                        }
+                        break;
+                    }
+
+                    default:
+                        Console.WriteLine($"WARNING: Unknown type '{type}' — skipping.");
+                        break;
+                }
             }
-        }
-
-        var objs1 = ObjImporter.Load(
-            "Models/din_rails.obj",
-            new Vector3(-0.675f, 0.0f, 0.1f),
-            new Vector3(0.01f),
-            new Vector3(0.8f, 0.2f, 0.2f),
-            false
-        );
-        foreach (var o in objs1)
-        {
-            scene.AddObject(o);
-            namedObjects.Add(($"Rail {namedObjects.Count + 1}", o));
-        }
-
-        var objs2 = ObjImporter.Load(
-            "Models/din_rails/din_rails.obj",
-            new Vector3(0.675f, 0.0f, 0.1f),
-            new Vector3(0.01f),
-            new Vector3(0.8f, 0.2f, 0.2f),
-            false
-        );
-        foreach (var o in objs2)
-        {
-            scene.AddObject(o);
-            namedObjects.Add(($"Rail {namedObjects.Count + 1}", o));
-        }
-        int totalmcb = 6;
-        int totalrcd = 3;
-
-        int mcbpartCount = 1;
-        int mcbCount = 1;
-        float mcbx_cor = -0.880f;
-        float mcb_width = 0.180f;
-        float mcb_offset = 0.01f;
-        for(int i = 0; i < totalmcb; i++){
-        var objs3 = ObjImporter.Load(
-            "Models/MCB.obj",
-            new Vector3(mcbx_cor, 0.625f, 0.075f),
-            new Vector3(0.01f),
-            new Vector3(0.8f, 0.2f, 0.2f),
-            false
-        );
-        foreach (var o in objs3)
-        {
-            scene.AddObject(o);
-            namedObjects.Add(($"MCB {mcbCount}.{mcbpartCount}", o));
-            mcbpartCount++;
-        }
-        mcbpartCount = 1;
-        mcbCount++;
-        mcbx_cor += mcb_width + mcb_offset;
-        }
-
-        int rcdpartCount = 1;
-        int rcdCount = 1;
-        float rcdx_cor = -0.880f;
-        float rcd_width = 0.720f;
-        float rcd_offset = 0.01f;
-        for(int i = 0 ;i < totalrcd;i++) {
-            var objs6 = ObjImporter.Load(
-                "Models/RCD.obj",
-                new Vector3(rcdx_cor, -0.625f, 0.075f),
-                new Vector3(0.01f),
-                new Vector3(0.2f, 0.8f, 0.2f),
-                false
-            );
-            foreach (var o in objs6)
+            catch (Exception ex)
             {
-                scene.AddObject(o);
-                namedObjects.Add(($"RCB {rcdCount}.{rcdpartCount}", o));
-                rcdpartCount++;
+                Console.WriteLine($"ERROR parsing line: '{rawLine}'\n  {ex.Message}");
             }
-            rcdpartCount = 1;
-            rcdCount++;
-            rcdx_cor += rcd_width + rcd_offset;
         }
 
+        Console.WriteLine($"Loaded: {cabinetCount} cabinet(s), {railCount} rail(s), {mcbCount} MCB(s), {rcdCount} RCD(s)");
+
+        // ── Window setup ─────────────────────────────────────────────────────
         window.Load += () =>
         {
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1f);
@@ -176,7 +231,6 @@ class Program
         {
             if (e.Button == MouseButton.Left)
             {
-                // Only rotate if clicking in the 3D viewport (left 70%)
                 float split = window.ClientSize.X * 0.7f;
                 if (window.MouseState.X < split)
                 {
@@ -212,10 +266,9 @@ class Program
         window.RenderFrame += args =>
         {
             int W = window.ClientSize.X, H = window.ClientSize.Y;
-            int split = (int)(W * 0.7f);   // 3D view: left 70%
-            int mapW  = W - split;          // 2D map:  right 30%
+            int split = (int)(W * 0.7f);
+            int mapW  = W - split;
 
-            // ── 3D viewport ──
             GL.Viewport(0, 0, split, H);
             GL.Scissor(0, 0, split, H);
             GL.Enable(EnableCap.ScissorTest);
@@ -228,18 +281,18 @@ class Program
                 MathHelper.DegreesToRadians(45f), split / (float)H, 0.1f, 100f);
             scene.Render(shader, view, proj);
 
-            // GUI overlaid on 3D view
             GL.Viewport(0, 0, split, H);
             gui?.Render(label => visibility[label]);
 
-            // ── 2D map viewport ──
             mapView?.Render(namedObjects, visibility, split, 0, mapW, H);
 
-            // Restore full viewport for swap
             GL.Viewport(0, 0, W, H);
             window.SwapBuffers();
         };
 
         window.Run();
     }
+
+    static float F(string[] parts, int idx) =>
+        float.Parse(parts[idx], System.Globalization.CultureInfo.InvariantCulture);
 }

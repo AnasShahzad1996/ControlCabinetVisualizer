@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CubeViewer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d56be7d25df03f943e1082d99f6fd1962ceacaba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+325ba92f3a409328c8f04165baee051a7fbb0108")]
 [assembly: System.Reflection.AssemblyProductAttribute("CubeViewer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CubeViewer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
