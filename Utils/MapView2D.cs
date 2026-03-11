@@ -258,7 +258,11 @@ public class MapView2D
             marginL,       marginT
         };
         UploadAndDraw(border, PrimitiveType.LineStrip);
+        // X axis label
+        DrawString("X-axis", marginL + plotW / 2f, vpH - 8f, screenProj, 1f, true);
 
+        // Y axis label  
+        DrawString("Y-axis", 4f, marginT + 8f + plotH / 2f, screenProj, 1f, true);
         GL.Disable(EnableCap.Blend);
         GL.Enable(EnableCap.DepthTest);
     }

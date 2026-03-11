@@ -43,21 +43,107 @@ class Program
         var visibility = new Dictionary<string, bool>();
 
         // Axes (excluded from map)
-        var axes = CoordinateAxes.Create(3f);
-        scene.AddObject(axes);
+        foreach (var a in CoordinateAxes.CreateAll(3f))
+            scene.AddObject(a);
 
         // Load model
         var objs = ObjImporter.Load(
             "Models/Rittal_AX_1033_300_300_210/new.obj",
             new Vector3(0, 0, 0),
-            new Vector3(-0.01f),
+            new Vector3(0.01f),
             new Vector3(0.8f),
             false
         );
+
+        int enclosureCount = 0;
         foreach (var o in objs)
         {
+            if(enclosureCount == 0 ){
             scene.AddObject(o);
-            namedObjects.Add(($"Part {namedObjects.Count + 1}", o));
+            namedObjects.Add(($"Cabinet Enclosure", o));
+            enclosureCount++;
+            }
+            else
+            {
+                scene.AddObject(o);
+                namedObjects.Add(("Mounting Plate", o));
+            }
+        }
+
+        var objs1 = ObjImporter.Load(
+            "Models/din_rails/din_rails.obj",
+            new Vector3(-0.675f, 0.0f, 0.1f),
+            new Vector3(0.01f),
+            new Vector3(0.8f, 0.2f, 0.2f),
+            false
+        );
+        foreach (var o in objs1)
+        {
+            scene.AddObject(o);
+            namedObjects.Add(($"Rail {namedObjects.Count + 1}", o));
+        }
+
+        var objs2 = ObjImporter.Load(
+            "Models/din_rails/din_rails.obj",
+            new Vector3(0.675f, 0.0f, 0.1f),
+            new Vector3(0.01f),
+            new Vector3(0.8f, 0.2f, 0.2f),
+            false
+        );
+        foreach (var o in objs2)
+        {
+            scene.AddObject(o);
+            namedObjects.Add(($"Rail {namedObjects.Count + 1}", o));
+        }
+        int totalmcb = 6;
+        int totalrcd = 3;
+
+        int mcbpartCount = 1;
+        int mcbCount = 1;
+        float mcbx_cor = -0.880f;
+        float mcb_width = 0.180f;
+        float mcb_offset = 0.01f;
+        for(int i = 0; i < totalmcb; i++){
+        var objs3 = ObjImporter.Load(
+            "Models/MCB/mcb3.obj",
+            new Vector3(mcbx_cor, 0.625f, 0.075f),
+            new Vector3(0.01f),
+            new Vector3(0.8f, 0.2f, 0.2f),
+            false
+        );
+        foreach (var o in objs3)
+        {
+            scene.AddObject(o);
+            namedObjects.Add(($"MCB {mcbCount}.{mcbpartCount}", o));
+            mcbpartCount++;
+        }
+        mcbpartCount = 1;
+        mcbCount++;
+        mcbx_cor += mcb_width + mcb_offset;
+        }
+
+        int rcdpartCount = 1;
+        int rcdCount = 1;
+        float rcdx_cor = -0.880f;
+        float rcd_width = 0.720f;
+        float rcd_offset = 0.01f;
+        for(int i = 0 ;i < totalrcd;i++) {
+            var objs6 = ObjImporter.Load(
+                "Models/RCD/RCD.obj",
+                new Vector3(rcdx_cor, -0.625f, 0.075f),
+                new Vector3(0.01f),
+                new Vector3(0.2f, 0.8f, 0.2f),
+                false
+            );
+            foreach (var o in objs6)
+            {
+                scene.AddObject(o);
+                namedObjects.Add(($"RCB {rcdCount}.{rcdpartCount}", o));
+                rcdpartCount++;
+            }
+            rcdpartCount = 1;
+            rcdCount++;
+            rcdx_cor += rcd_width + rcd_offset;
         }
 
         window.Load += () =>

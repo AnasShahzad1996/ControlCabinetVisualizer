@@ -6,7 +6,7 @@ namespace CubeViewer.Camera
     {
         public Vector3 Target = Vector3.Zero;
         public float Distance = 5f;
-        public float Yaw = -90f;
+        public float Yaw = 90f;
         public float Pitch = 0f;
 
         public Vector3 GetPosition()
