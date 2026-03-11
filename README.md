@@ -6,7 +6,7 @@ A real-time 3D viewer for electrical cabinet models (e.g. Rittal AX series), bui
 
 ## Screenshot
 
-![CubeViewer Screenshot](screenshot.png)
+![CubeViewer Screenshot](Res/GUI_outlook.png)
 
 ---
 
