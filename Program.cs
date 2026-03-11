@@ -48,7 +48,7 @@ class Program
 
         // Load model
         var objs = ObjImporter.Load(
-            "Models/Rittal_AX_1033_300_300_210/new.obj",
+            "Models/Electrical_cabinet.obj",
             new Vector3(0, 0, 0),
             new Vector3(0.01f),
             new Vector3(0.8f),
@@ -71,7 +71,7 @@ class Program
         }
 
         var objs1 = ObjImporter.Load(
-            "Models/din_rails/din_rails.obj",
+            "Models/din_rails.obj",
             new Vector3(-0.675f, 0.0f, 0.1f),
             new Vector3(0.01f),
             new Vector3(0.8f, 0.2f, 0.2f),
@@ -105,7 +105,7 @@ class Program
         float mcb_offset = 0.01f;
         for(int i = 0; i < totalmcb; i++){
         var objs3 = ObjImporter.Load(
-            "Models/MCB/mcb3.obj",
+            "Models/MCB.obj",
             new Vector3(mcbx_cor, 0.625f, 0.075f),
             new Vector3(0.01f),
             new Vector3(0.8f, 0.2f, 0.2f),
@@ -129,7 +129,7 @@ class Program
         float rcd_offset = 0.01f;
         for(int i = 0 ;i < totalrcd;i++) {
             var objs6 = ObjImporter.Load(
-                "Models/RCD/RCD.obj",
+                "Models/RCD.obj",
                 new Vector3(rcdx_cor, -0.625f, 0.075f),
                 new Vector3(0.01f),
                 new Vector3(0.2f, 0.8f, 0.2f),
